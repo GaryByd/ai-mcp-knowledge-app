@@ -1,8 +1,13 @@
 package com.luojiawei.config;
 
+import io.micrometer.observation.ObservationRegistry;
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.client.DefaultChatClientBuilder;
+import org.springframework.ai.chat.client.observation.ChatClientObservationConvention;
 import org.springframework.ai.ollama.OllamaEmbeddingModel;
 import org.springframework.ai.ollama.api.OllamaApi;
 import org.springframework.ai.ollama.api.OllamaOptions;
+import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.vectorstore.SimpleVectorStore;
 import org.springframework.ai.vectorstore.pgvector.PgVectorStore;
 import org.springframework.context.annotation.Bean;
@@ -46,6 +51,11 @@ public class OllamaConfig {
         return PgVectorStore.builder(jdbcTemplate, embeddingModel)
                 .vectorTableName("vector_store_ollama_deepseek")
                 .build();
+    }
+
+    @Bean("ollamaChatClient")
+    public ChatClient.Builder chatClientBuilder(OpenAiChatModel openAiChatModel) {
+        return new DefaultChatClientBuilder(openAiChatModel, ObservationRegistry.NOOP, (ChatClientObservationConvention) null);
     }
 
 }

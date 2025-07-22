@@ -1,14 +1,21 @@
 {
-  "name": "config",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/GaryByd/ai-mcp-knowledge-app.git"
-  },
-  "private": true
+  "mcpServers": {
+    "filesystem": {
+      "command": "C:/Program Files/nodejs/npx.cmd",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "C:/Users/luojiawei/Desktop",
+        "C:/Users/luojiawei/Desktop"
+      ]
+    },
+    "mcp-server-computer": {
+      "command": "C:/Users/luojiawei/.jdks/corretto-17.0.15/bin/java.exe",
+      "args": [
+        "-Dspring.ai.mcp.server.stdio=true",
+        "-jar",
+        "C:/Users/luojiawei/Downloads/mcp-server-computer-master/mcp-server-computer-master/target/mcp-server-computer-1.0.0.jar"
+      ]
+    }
+  }
 }

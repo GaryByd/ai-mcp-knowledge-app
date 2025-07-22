@@ -31,6 +31,7 @@ spring:
       client:
         stdio:
           servers-configuration: classpath:/config/mcp-servers-config.json
+
     ollama:
       base-url: http://81.69.47.218:6399
       embedding:
@@ -40,7 +41,7 @@ spring:
     openai:
       base-url: https://api.ppinfra.com/v3/openai
       api-key: sk_wZeQVQK1AKmguPn2GWUkj51lcBYSIz6DbZUWMa_tRYU
-      embedding-model: deepseek/deepseek-r1-distill-llama-8b
+      embedding-model: deepseek/deepseek-v3-turbo
     rag:
       embed: nomic-embed-text #nomic-embed-text、text-embedding-ada-002
 
