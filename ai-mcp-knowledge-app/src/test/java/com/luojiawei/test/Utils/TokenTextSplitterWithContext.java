@@ -1,4 +1,4 @@
-package cn.bugstack.knowledge.test.Utils;
+package com.luojiawei.test.Utils;
 
 import com.huaban.analysis.jieba.JiebaSegmenter;
 import com.huaban.analysis.jieba.SegToken;

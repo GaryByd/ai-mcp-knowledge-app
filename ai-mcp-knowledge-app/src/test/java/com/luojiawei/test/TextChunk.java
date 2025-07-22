@@ -1,4 +1,4 @@
-package cn.bugstack.knowledge.test;
+package com.luojiawei.test;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

@@ -1,4 +1,4 @@
-package cn.bugstack.knowledge.config;
+package com.luojiawei.config;
 
 import org.springframework.ai.ollama.OllamaEmbeddingModel;
 import org.springframework.ai.ollama.api.OllamaApi;

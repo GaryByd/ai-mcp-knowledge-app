@@ -1,4 +1,4 @@
-package cn.bugstack.knowledge.test;
+package com.luojiawei.test;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,6 +1,8 @@
-package cn.bugstack.knowledge.test;
+package com.luojiawei.test;
 
+import com.luojiawei.test.Utils.TokenTextSplitterWithContext;
 import com.alibaba.fastjson.JSON;
+import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -8,22 +10,21 @@ import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.chat.prompt.SystemPromptTemplate;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.model.Media;
-import org.springframework.ai.openai.OpenAiChatModel;
-import org.springframework.ai.openai.OpenAiChatOptions;
-import org.springframework.ai.openai.api.OpenAiApi;
+import org.springframework.ai.ollama.OllamaChatModel;
+import org.springframework.ai.ollama.api.OllamaOptions;
 import org.springframework.ai.reader.tika.TikaDocumentReader;
+import org.springframework.ai.transformer.splitter.TextSplitter;
 import org.springframework.ai.transformer.splitter.TokenTextSplitter;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.SimpleVectorStore;
 import org.springframework.ai.vectorstore.pgvector.PgVectorStore;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.core.io.Resource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.util.MimeType;
 import org.springframework.util.MimeTypeUtils;
@@ -38,33 +39,33 @@ import java.util.stream.Collectors;
 @Slf4j
 @RunWith(SpringRunner.class)
 @SpringBootTest
-public class OpenAiTest {
+public class OllamaTest {
+
+    @Resource
+    private OllamaChatModel ollamaChatModel;
 
     @Value("classpath:data/dog.png")
-    private Resource imageResource;
+    private org.springframework.core.io.Resource imageResource;
 
-    @Autowired
-    private OpenAiChatModel openAiChatModel;
-
-    @jakarta.annotation.Resource(name = "openAiSimpleVectorStore")
+    @jakarta.annotation.Resource(name = "ollamaSimpleVectorStore")
     private SimpleVectorStore simpleVectorStore;
 
-    @jakarta.annotation.Resource(name = "openAiPgVectorStore")
+    @jakarta.annotation.Resource(name = "ollamaPgVectorStore")
     private PgVectorStore pgVectorStore;
 
     @jakarta.annotation.Resource
     private TokenTextSplitter tokenTextSplitter;
 
-    @jakarta.annotation.Resource
-    private OpenAiApi openAiApi;
+    @Test
+    public void test_model() {
+        ChatOptions defaultOptions = ollamaChatModel.getDefaultOptions();
+    }
 
     @Test
     public void test_call() {
-        ChatResponse response = openAiChatModel.call(new Prompt(
+        ChatResponse response = ollamaChatModel.call(new Prompt(
                 "1+1",
-                OpenAiChatOptions.builder()
-                        .model("gpt-4o")
-                        .build()));
+                OllamaOptions.builder().model("deepseek-r1:1.5b").build()));
 
         log.info("测试结果(call):{}", JSON.toJSONString(response));
     }
@@ -76,10 +77,10 @@ public class OpenAiTest {
                 new Media(MimeType.valueOf(MimeTypeUtils.IMAGE_PNG_VALUE),
                         imageResource));
 
-        ChatResponse response = openAiChatModel.call(new Prompt(
+        ChatResponse response = ollamaChatModel.call(new Prompt(
                 userMessage,
-                OpenAiChatOptions.builder()
-                        .model("gpt-4o")
+                OllamaOptions.builder()
+                        .model("deepseek-r1:1.5b")
                         .build()));
 
         log.info("测试结果(images):{}", JSON.toJSONString(response));
@@ -89,11 +90,9 @@ public class OpenAiTest {
     public void test_stream() throws InterruptedException {
         CountDownLatch countDownLatch = new CountDownLatch(1);
 
-        Flux<ChatResponse> stream = openAiChatModel.stream(new Prompt(
+        Flux<ChatResponse> stream = ollamaChatModel.stream(new Prompt(
                 "1+1",
-                OpenAiChatOptions.builder()
-                        .model("gpt-4o")
-                        .build()));
+                OllamaOptions.builder().model("deepseek-r1:1.5b").build()));
 
         stream.subscribe(
                 chatResponse -> {
@@ -115,19 +114,22 @@ public class OpenAiTest {
         TikaDocumentReader reader = new TikaDocumentReader("./data/file.txt");
 
         List<Document> documents = reader.get();
-        List<Document> documentSplitterList = tokenTextSplitter.apply(documents);
+        TokenTextSplitterWithContext splitter = new TokenTextSplitterWithContext(100, 20);
+        List<Document> documentSplitterList = splitter.split(documents);
 
-        documents.forEach(doc -> doc.getMetadata().put("knowledge", "知识库名称v2"));
-        documentSplitterList.forEach(doc -> doc.getMetadata().put("knowledge", "知识库名称v2"));
+        documents.forEach(doc -> doc.getMetadata().put("knowledge", "ai知识库"));
+        documentSplitterList.forEach(doc -> doc.getMetadata().put("knowledge", "ai知识库"));
 
-//        pgVectorStore.accept(documentSplitterList);
+        pgVectorStore.accept(documentSplitterList);
 
         log.info("上传完成");
     }
 
+
+
     @Test
     public void chat() {
-        String message = "王大瓜今年几岁";
+        String message = "人工智能学科始于哪一年";
 
         String SYSTEM_PROMPT = """
                 Use the information from the DOCUMENTS section to provide accurate answers but act as if you knew this information innately.
@@ -140,12 +142,12 @@ public class OpenAiTest {
         SearchRequest request = SearchRequest.builder()
                 .query(message)
                 .topK(5)
-                .filterExpression("knowledge == '知识库名称v2'")
+                .filterExpression("knowledge == 'ai知识库'")
                 .build();
 
         List<Document> documents = pgVectorStore.similaritySearch(request);
 
-        String documentsCollectors = null == documents ? "" : documents.stream().map(Document::getText).collect(Collectors.joining());
+        String documentsCollectors = documents.stream().map(Document::getText).collect(Collectors.joining());
 
         Message ragMessage = new SystemPromptTemplate(SYSTEM_PROMPT).createMessage(Map.of("documents", documentsCollectors));
 
@@ -153,17 +155,15 @@ public class OpenAiTest {
         messages.add(new UserMessage(message));
         messages.add(ragMessage);
 
-        ChatResponse chatResponse = openAiChatModel.call(new Prompt(
+        ChatResponse chatResponse = ollamaChatModel.call(new Prompt(
                 messages,
-                OpenAiChatOptions.builder()
-                        .model("gpt-4o")
+                OllamaOptions.builder()
+                        .model("deepseek-r1:1.5b")
                         .build()));
 
         log.info("测试结果:{}", JSON.toJSONString(chatResponse));
     }
 
-    @Test
-    public void test_() {
-    }
+
 
 }

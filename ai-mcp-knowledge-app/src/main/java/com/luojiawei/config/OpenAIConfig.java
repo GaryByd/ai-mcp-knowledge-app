@@ -1,4 +1,4 @@
-package cn.bugstack.knowledge.config;
+package com.luojiawei.config;
 
 import org.springframework.ai.openai.OpenAiEmbeddingModel;
 import org.springframework.ai.openai.api.OpenAiApi;
